@@ -20,8 +20,8 @@
 class PanoramaViewController : public GLViewController {
 private:
     GLuint vao;
-    vector<Vertex> vertices;
-    vector<Triangle> faces;
+    std::vector<Vertex> vertices;
+    std::vector<Triangle> faces;
     GLfloat projectionMatrix[16];
     
 protected:

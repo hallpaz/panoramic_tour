@@ -12,9 +12,9 @@
 
 #include <CImg.h>
 #include <cmath>
-
-
 #include <fstream>
+
+#include "Utils.hpp"
 
 using namespace cimg_library;
 
@@ -25,6 +25,7 @@ float PanoramaViewController::verticalAngle = 0.0;
 float PanoramaViewController::horizontalAngle = 0.0;
 double PanoramaViewController::lastMouseX = 800.0/2.0;
 double PanoramaViewController::lastMouseY = 600.0/2.0;
+
 
 PanoramaViewController::PanoramaViewController(){
     
@@ -79,7 +80,7 @@ PanoramaViewController::PanoramaViewController(){
     
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
-    FIBITMAP* bitmap = FreeImage_Load(FreeImage_GetFileType(PATH_Background_rgbA_PNG.c_str(), 0), PATH_Background_rgbA_PNG.c_str());
+    FIBITMAP* bitmap = FreeImage_Load(FreeImage_GetFileType(PATH_Background_rgbA_PNG.c_str(), 0), PATH_Background_rgbB_PNG.c_str());
     cout << FreeImage_GetBPP(bitmap) << endl;
     width = FreeImage_GetWidth(bitmap);
     height = FreeImage_GetHeight(bitmap);
@@ -96,9 +97,6 @@ PanoramaViewController::PanoramaViewController(){
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     
     
-    //glEnable(GL_DEPTH_TEST);
-    //glDisable(GL_CULL_FACE);
-    
     glEnable(GL_CULL_FACE);
     glFrontFace(GL_CW);
     glCullFace(GL_BACK);
@@ -113,6 +111,8 @@ PanoramaViewController::PanoramaViewController(){
     
     configureInput();
     glfwGetCursorPos(window, &PanoramaViewController::lastMouseX, &PanoramaViewController::lastMouseY);
+    
+    write_Ply(vertices, faces, "/Users/hallpaz/cenaA.ply");
     
 }
 
@@ -140,7 +140,7 @@ void PanoramaViewController::update(float rate){
 void PanoramaViewController::draw(){
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glDrawElements(GL_TRIANGLES, (GLsizei) faces.size()*sizeof(Triangle), GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_LINES, (GLsizei) faces.size()*3, GL_UNSIGNED_INT, 0);
     
     glfwSwapBuffers(window);
 }
@@ -158,7 +158,7 @@ void PanoramaViewController::runScene(){
 }
 
 void PanoramaViewController::initPanoVertices(unsigned int width, unsigned int height){
-    CImg<float> image(PATH_Background_depthA_PNG.c_str());
+    CImg<float> image(PATH_Background_depthB_PNG.c_str());
     unsigned int paralelos = image.height();
     unsigned int meridianos = image.width();
     
@@ -178,8 +178,10 @@ void PanoramaViewController::initPanoVertices(unsigned int width, unsigned int h
         for(phi = 0.0; phi < 2*M_PI; phi += 2*M_PI/meridianos){
             //Position coordinates
             depth = image(i, j);
-            u = 1.0 - phi/(2*M_PI);
+            //u = 1.0 - phi/(2*M_PI);
+            u = phi/(2*M_PI);
             v = 1.0 - theta/M_PI;
+
             vertices.push_back(Vertex{ depth*sin(theta)*sin(phi), depth*cos(theta), depth*sin(theta)*cos(phi),
                 u, v,
                 0.0, 0.0, 0.0});
@@ -189,7 +191,8 @@ void PanoramaViewController::initPanoVertices(unsigned int width, unsigned int h
         i = 0;
         depth = image(i, j);
         ++j;
-        u = 0.0;
+        //u = 0.0;
+        u = 1.0;
         v = 1.0 - theta/M_PI;
         
         vertices.push_back(Vertex{ depth*sin(theta)*sin(phi), depth*cos(theta), depth*sin(theta)*cos(phi),
@@ -197,14 +200,16 @@ void PanoramaViewController::initPanoVertices(unsigned int width, unsigned int h
                            0.0, 0.0, 0.0});
     }
     
-    //double discontinuity_threshold = 0.5;
+    double discontinuity_threshold = 0.1;
     for(i = 0; i < paralelos; ++i){
         for (j = 0; j < meridianos; ++j) {
-//            if (abs(image(i,j) - image(i, (j+1)%meridianos)) > discontinuity_threshold
-//                || abs(image(i,j) - image(i+1, j)) > discontinuity_threshold) {
-//                continue;
-//            }
+            if (((j+1) < meridianos) && (abs(image(i,j) - image(i, (j+1)%meridianos)) > discontinuity_threshold)) {
+                continue;
+            }
             if(i+1 < paralelos){
+                if(abs(image(i,j) - image(i+1, j)) > discontinuity_threshold){
+                    continue;
+                }
                 faces.push_back( { i*(meridianos+1) + j, (i+1)*(meridianos+1) +j, i*(meridianos+1) + j+1  });
             }
             
@@ -278,7 +283,3 @@ void PanoramaViewController::configureInput(){
     glfwSetCursorPosCallback(window, &PanoramaViewController::cursor_position_callback);
     glfwSetKeyCallback(window, &PanoramaViewController::key_callback);
 }
-
-
-
-
