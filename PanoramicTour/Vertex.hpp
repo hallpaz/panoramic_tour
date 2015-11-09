@@ -9,21 +9,28 @@
 #ifndef Vertex_hpp
 #define Vertex_hpp
 
+#include <glm/glm.hpp>
 
 const unsigned int posOffset3D = 0;
 const unsigned int texOffset3D = 3*sizeof(float);
 const unsigned int normalOffset3D= 5;
 
 struct Vertex {
-    float x, y, z;
-    float u, v;
-    float nx, ny, nz;
+    // position coordinates
+    glm::vec3 position;
+    // texture coordinates
+    glm::vec2 texCoords;
+    // normal coordinates
+    glm::vec3 normal;
 };
 
 struct Vertex2D {
-    float x, y;
-    float u, v;
-    float nx, ny, nz;
+    // position coordinates
+    glm::vec2 position;
+    // texture coordinates
+    glm::vec2 texCoords;
+    // normal coordinates
+    glm::vec3 normal;
 };
 
 #endif /* Vertex_hpp */

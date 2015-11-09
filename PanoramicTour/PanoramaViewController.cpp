@@ -182,9 +182,9 @@ void PanoramaViewController::initPanoVertices(unsigned int width, unsigned int h
             u = phi/(2*M_PI);
             v = 1.0 - theta/M_PI;
 
-            vertices.push_back(Vertex{ depth*sin(theta)*sin(phi), depth*cos(theta), depth*sin(theta)*cos(phi),
-                u, v,
-                0.0, 0.0, 0.0});
+            vertices.push_back(Vertex{ glm::vec3(depth*sin(theta)*sin(phi), depth*cos(theta), depth*sin(theta)*cos(phi)),
+                glm::vec2(u, v),
+                glm::vec3(0.0, 0.0, 0.0) });
             ++i;
         }
         phi = 0.0;
@@ -195,9 +195,9 @@ void PanoramaViewController::initPanoVertices(unsigned int width, unsigned int h
         u = 1.0;
         v = 1.0 - theta/M_PI;
         
-        vertices.push_back(Vertex{ depth*sin(theta)*sin(phi), depth*cos(theta), depth*sin(theta)*cos(phi),
-                           u, v,
-                           0.0, 0.0, 0.0});
+        vertices.push_back(Vertex{ glm::vec3(depth*sin(theta)*sin(phi), depth*cos(theta), depth*sin(theta)*cos(phi)),
+            glm::vec2(u, v),
+            glm::vec3(0.0, 0.0, 0.0) });
     }
     
     double discontinuity_threshold = 0.1;
