@@ -16,6 +16,13 @@
 
 #include "Utils.hpp"
 
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/euler_angles.hpp>
+
+
 using namespace cimg_library;
 
 float PanoramaViewController::fieldOfView = 60.0;
@@ -104,10 +111,11 @@ PanoramaViewController::PanoramaViewController(){
     glEnable(GL_DEPTH_TEST);
     
     GLint matrixHandle = glGetUniformLocation(currentShader->getProgram(), "projectionMatrix");
-    glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, currentCamera.getProjectionMatrix().getValues());
+    //glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, currentCamera.getProjectionMatrix().getValues());
+    glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, glm::value_ptr(glm::perspectiveFov<float>(45.0, 800, 600, 0.1, 50.0)));
     
     matrixHandle = glGetUniformLocation(currentShader->getProgram(), "viewMatrix");
-    glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, currentCamera.getViewMatrix().getValues());
+    glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0)) );
     
     configureInput();
     glfwGetCursorPos(window, &PanoramaViewController::lastMouseX, &PanoramaViewController::lastMouseY);
@@ -129,18 +137,28 @@ void PanoramaViewController::update(float rate){
     currentCamera.setPosition(movement[1], 0.0, movement[0]);
     Matrix4 myviewmatrix = currentCamera.getViewMatrix();
     myviewmatrix = myviewmatrix*Matrix4::rotation(PanoramaViewController::verticalAngle, PanoramaViewController::horizontalAngle, 0.0);
-    movement[0] = 0.0;
-    movement[1] = 0.0;
+   
+    
+    glm::mat4 viewMatrix(1.0);
+    float rotX =  glm::radians(PanoramaViewController::verticalAngle);
+    float rotY =  glm::radians(PanoramaViewController::horizontalAngle);
+    viewMatrix =  glm::eulerAngleXYZ<float>(rotX, rotY, 0.0)* viewMatrix;
+    viewMatrix =  glm::translate(viewMatrix, glm::vec3(movement[1], 0.0, movement[0]));
+    
+    
     GLint matrixHandle = glGetUniformLocation(currentShader->getProgram(), "viewMatrix");
-    //glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, currentCamera.getViewMatrix().getValues());
-    glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, myviewmatrix.getValues());
+    glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, glm::value_ptr(viewMatrix));
+    //glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, myviewmatrix.getValues());
     //glfwSetCursorPos(window, 800/2, 600/2);
+    
+    //movement[0] = 0.0;
+    //movement[1] = 0.0;
 }
 
 void PanoramaViewController::draw(){
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glDrawElements(GL_LINES, (GLsizei) faces.size()*3, GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, (GLsizei) faces.size()*3, GL_UNSIGNED_INT, 0);
     
     glfwSwapBuffers(window);
 }
@@ -203,13 +221,13 @@ void PanoramaViewController::initPanoVertices(unsigned int width, unsigned int h
     double discontinuity_threshold = 0.1;
     for(i = 0; i < paralelos; ++i){
         for (j = 0; j < meridianos; ++j) {
-            if (((j+1) < meridianos) && (abs(image(i,j) - image(i, (j+1)%meridianos)) > discontinuity_threshold)) {
-                continue;
-            }
+//            if (((j+1) < meridianos) && (abs(image(i,j) - image(i, (j+1)%meridianos)) > discontinuity_threshold)) {
+//                continue;
+//            }
             if(i+1 < paralelos){
-                if(abs(image(i,j) - image(i+1, j)) > discontinuity_threshold){
-                    continue;
-                }
+//                if(abs(image(i,j) - image(i+1, j)) > discontinuity_threshold){
+//                    continue;
+//                }
                 faces.push_back( { i*(meridianos+1) + j, (i+1)*(meridianos+1) +j, i*(meridianos+1) + j+1  });
             }
             
