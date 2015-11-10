@@ -18,8 +18,6 @@
 #include <string>
 #include <unordered_map>
 
-using namespace std;
-
 namespace LayerSceneGraph {
     
 enum {VERTEX_SHADER, FRAGMENT_SHADER};
@@ -36,11 +34,11 @@ enum Buffer_Indexes : GLint{
 class LPShader {
 
 public:
-	LPShader(const string vertexshaderFile, const string fragmentShaderFile);
+    LPShader(const std::string vertexshaderFile, const std::string fragmentShaderFile);
 	virtual ~LPShader();
 	void inline setUpShader(const GLchar *vertexshaderCode, const GLchar *fragmentShaderCode);
     void linkProgram();
-	void bindAttributes(const unordered_map<GLint, string> attributes_map);
+    void bindAttributes(const std::unordered_map<GLint, std::string> attributes_map);
 	void enableTexture();
 	GLuint loadShader(GLenum type, const GLchar *shaderSrc);
 	GLuint getProgram();
@@ -52,7 +50,7 @@ private:
     GLuint textureId;
     GLuint gvSamplerHandle;
     GLint getLinkStatus();
-    string readShaderFile(const GLchar *filename, int shaderType);
+    std::string readShaderFile(const GLchar *filename, int shaderType);
     
 };
 

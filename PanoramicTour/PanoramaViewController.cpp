@@ -14,6 +14,10 @@
 #include <cmath>
 #include <fstream>
 
+#include <glm/gtc/type_ptr.hpp>
+
+#include "Math/Matrix4.h"
+
 #include "Utils.hpp"
 
 using namespace cimg_library;
@@ -40,7 +44,7 @@ PanoramaViewController::PanoramaViewController(){
     initPanoVertices(100, 50);
     
     //buildPerspective(&projectionMatrix[0], 800, 600);
-    currentCamera.buildPerspective(800, 600, PanoramaViewController::fieldOfView);
+    currentCamera = new Camera(800, 600, PanoramaViewController::fieldOfView);
     
     
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -102,12 +106,22 @@ PanoramaViewController::PanoramaViewController(){
     glCullFace(GL_BACK);
     
     glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
     
     GLint matrixHandle = glGetUniformLocation(currentShader->getProgram(), "projectionMatrix");
-    glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, currentCamera.getProjectionMatrix().getValues());
+    //glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, glm::value_ptr(currentCamera->getProjectionMatrix()) );
+    Matrix4 identity;
+    glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, identity.getValues());
+    
     
     matrixHandle = glGetUniformLocation(currentShader->getProgram(), "viewMatrix");
-    glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, currentCamera.getViewMatrix().getValues());
+    //glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, glm::value_ptr(currentCamera->getViewMatrix()));
+    //glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0)));
+    
+    glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, identity.getValues());
+
+    
+    std::cout << glm::value_ptr(glm::mat4(1.0)) << std::endl;
     
     configureInput();
     glfwGetCursorPos(window, &PanoramaViewController::lastMouseX, &PanoramaViewController::lastMouseY);
@@ -117,30 +131,29 @@ PanoramaViewController::PanoramaViewController(){
 }
 
 void PanoramaViewController::update(float rate){
-    if(PanoramaViewController::perspectiveChanged){
+    /*if(PanoramaViewController::perspectiveChanged){
         int width, height;
         glfwGetFramebufferSize(window, &width, &height);
-        currentCamera.buildPerspective(width, height, PanoramaViewController::fieldOfView);
+        currentCamera->buildPerspective(width, height, PanoramaViewController::fieldOfView);
         GLint matrixHandle = glGetUniformLocation(currentShader->getProgram(), "projectionMatrix");
-        glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, currentCamera.getProjectionMatrix().getValues());
+        glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, glm::value_ptr(currentCamera->getProjectionMatrix()));
         PanoramaViewController::perspectiveChanged = false;
     }
     
-    currentCamera.setPosition(movement[1], 0.0, movement[0]);
-    Matrix4 myviewmatrix = currentCamera.getViewMatrix();
-    myviewmatrix = myviewmatrix*Matrix4::rotation(PanoramaViewController::verticalAngle, PanoramaViewController::horizontalAngle, 0.0);
+    currentCamera->setPosition(movement[1], 0.0, movement[0]);
+    currentCamera->rotateBy(PanoramaViewController::verticalAngle, PanoramaViewController::horizontalAngle, 0.0);
+    
     movement[0] = 0.0;
     movement[1] = 0.0;
     GLint matrixHandle = glGetUniformLocation(currentShader->getProgram(), "viewMatrix");
-    //glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, currentCamera.getViewMatrix().getValues());
-    glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, myviewmatrix.getValues());
-    //glfwSetCursorPos(window, 800/2, 600/2);
+    glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, glm::value_ptr(currentCamera->getViewMatrix()));*/
+    
 }
 
 void PanoramaViewController::draw(){
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glDrawElements(GL_LINES, (GLsizei) faces.size()*3, GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, (GLsizei) faces.size()*3, GL_UNSIGNED_INT, 0);
     
     glfwSwapBuffers(window);
 }
@@ -282,4 +295,9 @@ void PanoramaViewController::configureInput(){
     glfwSetScrollCallback(window, &PanoramaViewController::scroll_callback);
     glfwSetCursorPosCallback(window, &PanoramaViewController::cursor_position_callback);
     glfwSetKeyCallback(window, &PanoramaViewController::key_callback);
+}
+
+PanoramaViewController::~PanoramaViewController()
+{
+    delete currentCamera;
 }

@@ -15,7 +15,7 @@
 #include "Vertex.hpp"
 #include "Triangle.hpp"
 
-#include "LPCamera.h"
+#include "Camera.hpp"
 
 class PanoramaViewController : public GLViewController {
 private:
@@ -33,7 +33,7 @@ protected:
     static double lastMouseX;
     static double lastMouseY;
     
-    LayerSceneGraph::LPCamera currentCamera;
+    Camera *currentCamera;
     void configureInput();
     static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
     static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos);
@@ -41,6 +41,7 @@ protected:
     
 public:
     PanoramaViewController();
+    virtual ~PanoramaViewController();
     virtual void update(float rate);
     virtual void draw();
     virtual void runScene();

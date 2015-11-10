@@ -12,30 +12,35 @@ float Camera::MovementSpeed = SPEED;
 float Camera::MouseSensitivity = SENSITIVTY;
 Camera *Camera::currentCamera = nullptr;
 
-Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), Zoom(ZOOM)
+Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), angleOfView(default_FOV)
 {
-    this->Position = position;
+    this->position = position;
     this->WorldUp = up;
     this->Yaw = yaw;
     this->Pitch = pitch;
     this->updateCameraVectors();
-    Camera::currentCamera = this;
+    if(Camera::currentCamera == nullptr) {
+        Camera::currentCamera = this;
+    }
 }
-// Constructor with scalar values
-Camera::Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), Zoom(ZOOM)
+
+Camera::Camera(unsigned int width, unsigned int height, float angleOfView, float near, float far)
 {
-    this->Position = glm::vec3(posX, posY, posZ);
-    this->WorldUp = glm::vec3(upX, upY, upZ);
-    this->Yaw = yaw;
-    this->Pitch = pitch;
-    this->updateCameraVectors();
-    Camera::currentCamera = this;
+    buildPerspective(width, height, angleOfView, near, far);
+    if (Camera::currentCamera == nullptr) {
+        Camera::currentCamera = this;
+    }
 }
 
 // Returns the view matrix calculated using Eular Angles and the LookAt Matrix
-glm::mat4 Camera::GetViewMatrix()
+glm::mat4 Camera::getViewMatrix()
 {
-    return glm::lookAt(this->Position, this->Position + this->Front, this->Up);
+    return glm::lookAt(this->position, this->position + this->Front, this->Up);
+}
+
+const glm::mat4 &Camera::getProjectionMatrix()
+{
+    return projectionMatrix;
 }
 
 // Processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
@@ -43,13 +48,13 @@ void Camera::ProcessKeyboard(Camera_Movement direction, float deltaTime)
 {
     float velocity = Camera::MovementSpeed * deltaTime;
     if (direction == FORWARD)
-        currentCamera->Position += currentCamera->Front * velocity;
+        currentCamera->position += currentCamera->Front * velocity;
     if (direction == BACKWARD)
-        currentCamera->Position -= currentCamera->Front * velocity;
+        currentCamera->position -= currentCamera->Front * velocity;
     if (direction == LEFT)
-        currentCamera->Position -= currentCamera->Right * velocity;
+        currentCamera->position -= currentCamera->Right * velocity;
     if (direction == RIGHT)
-        currentCamera->Position += currentCamera->Right * velocity;
+        currentCamera->position += currentCamera->Right * velocity;
 }
 
 // Processes input received from a mouse input system. Expects the offset value in both the x and y direction.
@@ -77,12 +82,12 @@ void Camera::ProcessMouseMovement(float xoffset, float yoffset, bool constrainPi
 // Processes input received from a mouse scroll-wheel event. Only requires input on the vertical wheel-axis
 void Camera::ProcessMouseScroll(float yoffset)
 {
-    if (currentCamera->Zoom >= 1.0f && currentCamera->Zoom <= 45.0f)
-        currentCamera->Zoom -= yoffset;
-    if (currentCamera->Zoom <= 1.0f)
-        currentCamera->Zoom = 1.0f;
-    if (currentCamera->Zoom >= 45.0f)
-        currentCamera->Zoom = 45.0f;
+    if (currentCamera->angleOfView >= 1.0f && currentCamera->angleOfView <= 60.0f)
+        currentCamera->angleOfView -= yoffset;
+    if (currentCamera->angleOfView <= 1.0f)
+        currentCamera->angleOfView = 1.0f;
+    if (currentCamera->angleOfView >= 60.0f)
+        currentCamera->angleOfView = 60.0f;
 }
 
 // Calculates the front vector from the Camera's (updated) Eular Angles
@@ -97,4 +102,15 @@ void Camera::updateCameraVectors()
     // Also re-calculate the Right and Up vector
     this->Right = glm::normalize(glm::cross(this->Front, this->WorldUp));  // Normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
     this->Up    = glm::normalize(glm::cross(this->Right, this->Front));
+}
+
+
+void Camera::buildPerspective(unsigned int width, unsigned int height, float angleOfView, float near, float far)
+{
+    this->width = width;
+    this->height = height;
+    this->angleOfView = angleOfView;
+    this->near = near;
+    this->far = far;
+    projectionMatrix = glm::perspectiveFov<float>(angleOfView, width, height, this->near, this->far);
 }
