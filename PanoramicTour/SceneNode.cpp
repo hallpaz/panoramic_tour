@@ -21,6 +21,7 @@ SceneNode::SceneNode() {
     inverseTransform = glm::mat4(1.0);
     worldTransform = glm::mat4(1.0);
     inverseWorldTransform = glm::mat4(1.0);
+    position = glm::vec3(0, 0, 0);
 }
 
 /**
@@ -106,8 +107,8 @@ SceneNode* SceneNode::getParent() {
     void SceneNode::setPosition(glm::vec3 pos) {
 	position = pos;
     
-    glm::translate(transform, position);
-    glm::translate(inverseTransform, -position);
+    transform = glm::translate(transform, position);
+    inverseTransform =  glm::translate(inverseTransform, -position);
 }
 /**
  * Sets this node position coordinates given by x, y, z

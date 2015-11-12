@@ -11,11 +11,12 @@
 
 #include <vector>
 #include "Vertex.hpp"
+#include "Triangle.hpp"
 
 class Mesh {
 private:
     std::vector<Vertex> vertices;
-    std::vector<unsigned int> indices;
+    std::vector<Triangle> faces;
     
 public:
     Mesh();

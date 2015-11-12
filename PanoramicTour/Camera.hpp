@@ -34,26 +34,26 @@ const float default_FOV  =  45.0f;
 class Camera : public SceneNode
 {
 public:
-    // Constructor with vectors
-    Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH);
-    Camera(unsigned int width = 360, unsigned int height = 480, float angleOfView = 60, float near = 0.1, float far = 50);
+    
+    Camera(unsigned int width = 360, unsigned int height = 480, float angleOfView = 45.0, float near = 0.1, float far = 50);
     // Processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
     static void ProcessKeyboard(Camera_Movement direction, float deltaTime);
-    
     // Processes input received from a mouse input system. Expects the offset value in both the x and y direction.
     static void ProcessMouseMovement(float xoffset, float yoffset, bool constrainPitch = true);
-    
     // Processes input received from a mouse scroll-wheel event. Only requires input on the vertical wheel-axis
     static void ProcessMouseScroll(float yoffset);
     
     
-    // Returns the view matrix calculated using Eular Angles and the LookAt Matrix
-    glm::mat4 getViewMatrix();
+  
+    void setViewMatrix(const glm::mat4 matrix);
+    void setOrientation(const glm::mat4 matrix);
+    void setOrientation();
+    void setProjectionMatrix(const glm::mat4 matrix);
+    void setNear(float n);
+    void setFar(float f);
+    void setFov(float fov);
+    void setResolution(float width, float height);
     
-    void buildPerspective(unsigned int width, unsigned int height, float angleOfView = default_FOV, float near = 0.1, float far = 50);
-    const glm::mat4 &getProjectionMatrix();
-    void setViewMatrix(const glm::mat4 &matrix);
-    void setProjectionMatrix(const glm::mat4 &matrix);
     
     unsigned int getWidth();
     unsigned int getHeight();
@@ -61,36 +61,36 @@ public:
     float getAspectRatio();
     float getNearDistance();
     float getFarDistance();
+    glm::mat4 getViewMatrix();
+    const glm::mat4 &getProjectionMatrix();
     
     glm::vec3 &getHorizontalDirection();
     glm::vec3 &getLookDirection();
     glm::vec3 &getUpDirection();
     
 protected:
-    // Camera Attributes
-    glm::vec3 Front;
-    glm::vec3 Up;
-    glm::vec3 Right;
-    glm::vec3 WorldUp;
+   
     
     glm::mat4 projectionMatrix;
     
     float near, far, angleOfView;
     unsigned int width, height;
-    
-    
-    // Eular Angles
-    float Yaw;
-    float Pitch;
-    // Camera options
     static float MovementSpeed;
     static float MouseSensitivity;
-    
     static Camera *currentCamera;
     
+    // Eular Angles
+    // Camera Attributes
+    /*glm::vec3 Front;
+     glm::vec3 Up;
+     glm::vec3 Right;
+     glm::vec3 WorldUp;*/
+    //float Yaw;
+    //float Pitch;
+    // Camera options
 private:
     // Calculates the front vector from the Camera's (updated) Eular Angles
-    void updateCameraVectors();
+    //void updateCameraVectors();
     
 };
 
