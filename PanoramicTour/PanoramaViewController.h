@@ -46,6 +46,8 @@ public:
     virtual void draw();
     virtual void runScene();
     
+    void updateShaderMatrices();
+    
     void initPanoVertices(uint width = 12, uint height = 6);
     void buildPerspective(GLfloat* matrix, GLuint width, GLuint height, GLfloat near = 0.001, GLfloat far = 50.0, GLfloat angleOfView = 45.0);
     

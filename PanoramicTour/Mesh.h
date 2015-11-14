@@ -25,7 +25,7 @@ public:
     unsigned int numIndices();
     void addVertex(Vertex v);
     void setVertex(Vertex* array_vertices, size_t count);
-    void setIndices(unsigned int* array_indices, size_t count);
+    void setFaces(Triangle* array_indices, size_t count);
     const Vertex* getData() const;
 };
 

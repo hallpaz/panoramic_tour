@@ -111,15 +111,7 @@ PanoramaViewController::PanoramaViewController(){
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
     
-    GLint matrixHandle = glGetUniformLocation(currentShader->getProgram(), "projectionMatrix");
-    glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, glm::value_ptr(currentCamera->getProjectionMatrix()) );
-    //glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, glm::value_ptr(glm::perspectiveFov<float>(45.0, 800, 600, 0.1, 50)));
-    
-    
-    matrixHandle = glGetUniformLocation(currentShader->getProgram(), "viewMatrix");
-    glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, glm::value_ptr(currentCamera->getTransform()));
-    //glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0)));
-    
+    updateShaderMatrices();
     
     configureInput();
     glfwGetCursorPos(window, &PanoramaViewController::lastMouseX, &PanoramaViewController::lastMouseY);
@@ -127,6 +119,16 @@ PanoramaViewController::PanoramaViewController(){
     write_Ply(vertices, faces, "/Users/hallpaz/cenaA.ply");
     
 }
+
+void PanoramaViewController::updateShaderMatrices()
+{
+    GLint matrixHandle = glGetUniformLocation(currentShader->getProgram(), "projectionMatrix");
+    glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, glm::value_ptr(currentCamera->getProjectionMatrix()) );
+    
+    matrixHandle = glGetUniformLocation(currentShader->getProgram(), "viewMatrix");
+    glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, glm::value_ptr(currentCamera->getTransform()));
+}
+
 
 void PanoramaViewController::update(float rate){
     
@@ -137,11 +139,7 @@ void PanoramaViewController::update(float rate){
                                                             0.0);
     currentCamera->setOrientation(orientationMatrix);
     
-    GLint matrixHandle = glGetUniformLocation(currentShader->getProgram(), "projectionMatrix");
-    glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, glm::value_ptr(currentCamera->getProjectionMatrix()));
-    
-    matrixHandle = glGetUniformLocation(currentShader->getProgram(), "viewMatrix");
-    glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, glm::value_ptr(currentCamera->getTransform()));
+    updateShaderMatrices();
     
 }
 
