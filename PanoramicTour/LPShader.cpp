@@ -22,9 +22,9 @@ namespace LayerSceneGraph {
 /**
  * Constructor. It's necessary to pass the path for a vertex shader file and a fragment shader file
  */
-LPShader::LPShader(const string vertexShaderFile, const string fragmentShaderFile) {
+LPShader::LPShader(const std::string vertexShaderFile, const std::string fragmentShaderFile) {
     
-    string vertexShaderCode, fragmentShaderCode;
+    std::string vertexShaderCode, fragmentShaderCode;
     
     vertexShaderCode = readShaderFile(vertexShaderFile.c_str(), VERTEX_SHADER);
     fragmentShaderCode = readShaderFile(fragmentShaderFile.c_str(), FRAGMENT_SHADER);
@@ -69,7 +69,7 @@ void LPShader::setUpShader(const GLchar *vertexshaderCode, const GLchar *fragmen
 /**
 * Binds attributes "position" and "textureCoordinates" to attributes in the vertex shader
 */
-void LPShader::bindAttributes(const unordered_map<GLint, string> attributes_map){
+void LPShader::bindAttributes(const std::unordered_map<GLint, std::string> attributes_map){
     
     for (auto it = attributes_map.begin(); it != attributes_map.end(); it++) {
         glEnableVertexAttribArray(it->first);
@@ -105,16 +105,16 @@ void LPShader::linkProgram(){
  * @param shaderType A int which represents the type of the shader file
  * @return content The source code of the shader
  */
-string LPShader::readShaderFile(const GLchar *filename, int shaderType)
+std::string LPShader::readShaderFile(const GLchar *filename, int shaderType)
 {
-    ifstream ifs(filename);
+    std::ifstream ifs(filename);
     if(ifs.fail()){
-        cout << "Erro na leitura do arquivo de shader " << filename << endl;
+        std::cout << "Erro na leitura do arquivo de shader " << filename << std::endl;
     }
-    stringstream buffer;
+    std::stringstream buffer;
     buffer << ifs.rdbuf();
     ifs.close();
-    string content = buffer.str();
+    std::string content = buffer.str();
     
     //cout << content << endl;
     return content;

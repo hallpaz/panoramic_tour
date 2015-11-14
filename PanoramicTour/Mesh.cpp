@@ -30,6 +30,6 @@ void Mesh::setVertex(Vertex *array_vertices, size_t count){
     vertices.assign(array_vertices, array_vertices + count);
 }
 
-void Mesh::setIndices(unsigned int *array_indices, size_t count){
-    indices.assign(array_indices, array_indices + count);
+void Mesh::setFaces(Triangle *array_indices, size_t count){
+    faces.assign(array_indices, array_indices + count);
 }

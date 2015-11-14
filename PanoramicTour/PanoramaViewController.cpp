@@ -14,6 +14,11 @@
 #include <cmath>
 #include <fstream>
 
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/euler_angles.hpp>
+
+#include "Math/Matrix4.h"
+
 #include "Utils.hpp"
 
 
@@ -25,7 +30,7 @@
 
 using namespace cimg_library;
 
-float PanoramaViewController::fieldOfView = 60.0;
+float PanoramaViewController::fieldOfView = 45.0;
 bool PanoramaViewController::perspectiveChanged = false;
 float PanoramaViewController::movement[2] = {0.0, 0.0};
 float PanoramaViewController::verticalAngle = 0.0;
@@ -47,8 +52,10 @@ PanoramaViewController::PanoramaViewController(){
     initPanoVertices(100, 50);
     
     //buildPerspective(&projectionMatrix[0], 800, 600);
-    currentCamera.buildPerspective(800, 600, PanoramaViewController::fieldOfView);
-    
+    //currentCamera = new Camera(800, 600, PanoramaViewController::fieldOfView);
+
+    currentCamera = new Camera(800, 600, PanoramaViewController::fieldOfView);
+
     
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, vertices.size()*sizeof(Vertex), &vertices.front(), GL_STATIC_DRAW);
@@ -109,13 +116,10 @@ PanoramaViewController::PanoramaViewController(){
     glCullFace(GL_BACK);
     
     glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
     
-    GLint matrixHandle = glGetUniformLocation(currentShader->getProgram(), "projectionMatrix");
-    //glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, currentCamera.getProjectionMatrix().getValues());
-    glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, glm::value_ptr(glm::perspectiveFov<float>(45.0, 800, 600, 0.1, 50.0)));
-    
-    matrixHandle = glGetUniformLocation(currentShader->getProgram(), "viewMatrix");
-    glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0)) );
+
+    updateShaderMatrices();
     
     configureInput();
     glfwGetCursorPos(window, &PanoramaViewController::lastMouseX, &PanoramaViewController::lastMouseY);
@@ -124,35 +128,26 @@ PanoramaViewController::PanoramaViewController(){
     
 }
 
+void PanoramaViewController::updateShaderMatrices()
+{
+    GLint matrixHandle = glGetUniformLocation(currentShader->getProgram(), "projectionMatrix");
+    glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, glm::value_ptr(currentCamera->getProjectionMatrix()) );
+    
+    matrixHandle = glGetUniformLocation(currentShader->getProgram(), "viewMatrix");
+    glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, glm::value_ptr(currentCamera->getTransform()));
+}
+
+
 void PanoramaViewController::update(float rate){
-    if(PanoramaViewController::perspectiveChanged){
-        int width, height;
-        glfwGetFramebufferSize(window, &width, &height);
-        currentCamera.buildPerspective(width, height, PanoramaViewController::fieldOfView);
-        GLint matrixHandle = glGetUniformLocation(currentShader->getProgram(), "projectionMatrix");
-        glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, currentCamera.getProjectionMatrix().getValues());
-        PanoramaViewController::perspectiveChanged = false;
-    }
     
-    currentCamera.setPosition(movement[1], 0.0, movement[0]);
-    Matrix4 myviewmatrix = currentCamera.getViewMatrix();
-    myviewmatrix = myviewmatrix*Matrix4::rotation(PanoramaViewController::verticalAngle, PanoramaViewController::horizontalAngle, 0.0);
-   
+    currentCamera->setPosition(movement[1], 0.0, movement[0]);
     
-    glm::mat4 viewMatrix(1.0);
-    float rotX =  glm::radians(PanoramaViewController::verticalAngle);
-    float rotY =  glm::radians(PanoramaViewController::horizontalAngle);
-    viewMatrix =  glm::eulerAngleXYZ<float>(rotX, rotY, 0.0)* viewMatrix;
-    viewMatrix =  glm::translate(viewMatrix, glm::vec3(movement[1], 0.0, movement[0]));
+    glm::mat4 orientationMatrix = glm::eulerAngleXYZ<float>(glm::radians(PanoramaViewController::verticalAngle),
+                                                     glm::radians(PanoramaViewController::horizontalAngle),
+                                                            0.0);
+    currentCamera->setOrientation(orientationMatrix);
     
-    
-    GLint matrixHandle = glGetUniformLocation(currentShader->getProgram(), "viewMatrix");
-    glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, glm::value_ptr(viewMatrix));
-    //glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, myviewmatrix.getValues());
-    //glfwSetCursorPos(window, 800/2, 600/2);
-    
-    //movement[0] = 0.0;
-    //movement[1] = 0.0;
+    updateShaderMatrices();
 }
 
 void PanoramaViewController::draw(){
@@ -200,9 +195,9 @@ void PanoramaViewController::initPanoVertices(unsigned int width, unsigned int h
             u = phi/(2*M_PI);
             v = 1.0 - theta/M_PI;
 
-            vertices.push_back(Vertex{ depth*sin(theta)*sin(phi), depth*cos(theta), depth*sin(theta)*cos(phi),
-                u, v,
-                0.0, 0.0, 0.0});
+            vertices.push_back(Vertex{ glm::vec3(depth*sin(theta)*sin(phi), depth*cos(theta), depth*sin(theta)*cos(phi)),
+                glm::vec2(u, v),
+                glm::vec3(0.0, 0.0, 0.0) });
             ++i;
         }
         phi = 0.0;
@@ -213,9 +208,9 @@ void PanoramaViewController::initPanoVertices(unsigned int width, unsigned int h
         u = 1.0;
         v = 1.0 - theta/M_PI;
         
-        vertices.push_back(Vertex{ depth*sin(theta)*sin(phi), depth*cos(theta), depth*sin(theta)*cos(phi),
-                           u, v,
-                           0.0, 0.0, 0.0});
+        vertices.push_back(Vertex{ glm::vec3(depth*sin(theta)*sin(phi), depth*cos(theta), depth*sin(theta)*cos(phi)),
+            glm::vec2(u, v),
+            glm::vec3(0.0, 0.0, 0.0) });
     }
     
     double discontinuity_threshold = 0.1;
@@ -242,20 +237,7 @@ void PanoramaViewController::initPanoVertices(unsigned int width, unsigned int h
 
 
 void PanoramaViewController::scroll_callback(GLFWwindow *window, double xoffset, double yoffset){
-    float scalefactor;
-    //cout << yoffset << endl;
-    
-    scalefactor = 1.0 + yoffset/30.0;
-    
-    PanoramaViewController::fieldOfView *= scalefactor;
-    if(PanoramaViewController::fieldOfView < 15.0){
-        PanoramaViewController::fieldOfView = 15.0;
-    }
-    if(PanoramaViewController::fieldOfView > 100.0){
-        PanoramaViewController::fieldOfView = 100.0;
-    }
-    PanoramaViewController::perspectiveChanged = true;
-    
+    Camera::ProcessMouseScroll(yoffset);
 }
 
 void PanoramaViewController::cursor_position_callback(GLFWwindow *window, double xpos, double ypos){
@@ -289,6 +271,7 @@ void PanoramaViewController::key_callback(GLFWwindow *window, int key, int scanc
         //position -= right * deltaTime * speed;
         PanoramaViewController::movement[1] += speed;
     }
+    //Camera::ProcessKeyboard(Camera_Movement direction, float deltaTime);
     
     if (key == ( GLFW_KEY_ESCAPE ) && (action == GLFW_PRESS)){
         glfwSetWindowShouldClose(window, true);
@@ -300,4 +283,9 @@ void PanoramaViewController::configureInput(){
     glfwSetScrollCallback(window, &PanoramaViewController::scroll_callback);
     glfwSetCursorPosCallback(window, &PanoramaViewController::cursor_position_callback);
     glfwSetKeyCallback(window, &PanoramaViewController::key_callback);
+}
+
+PanoramaViewController::~PanoramaViewController()
+{
+    delete currentCamera;
 }

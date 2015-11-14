@@ -27,14 +27,14 @@ void write_Ply(std::vector<Vertex> &vertices, std::vector<Triangle> &faces, std:
     << "property list uchar float texcoord" << std::endl
     << "end_header" << std::endl;
     for ( std::vector<Vertex>::iterator v_it = vertices.begin(); v_it != vertices.end(); ++v_it) {
-        outfile << v_it->x << " " << v_it->y << " " << v_it->z << std::endl;
+        outfile << v_it->position.x << " " << v_it->position.y << " " << v_it->position.z << std::endl;
     }
     
     for ( std::vector<Triangle>::iterator f_it = faces.begin(); f_it != faces.end(); ++f_it) {
         outfile << "3" << " " << f_it->a << " " << f_it->b << " " << f_it->c << std::endl;
     }
     for ( std::vector<Vertex>::iterator v_it = vertices.begin(); v_it != vertices.end(); ++v_it) {
-        outfile << v_it->u << " " << v_it->v << std::endl;
+        outfile << v_it->texCoords.x << " " << v_it->texCoords.y << std::endl;
     }
     
     
