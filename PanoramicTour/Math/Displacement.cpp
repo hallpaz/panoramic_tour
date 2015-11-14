@@ -7,8 +7,6 @@
 
 #include "Displacement.h"
 
-namespace LayerSceneGraph {
-
 Displacement::Displacement() {
 
 }
@@ -23,5 +21,3 @@ Displacement::~Displacement() {
 Displacement::Displacement(float x, float y, float z) {
 	this->x = x;	this->y = y;	this->z = z;
 }
-
-} /* namespace LayerSceneGraph */

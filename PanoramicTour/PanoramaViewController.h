@@ -16,13 +16,15 @@
 #include "Triangle.hpp"
 
 #include "Camera.hpp"
+#include "DrawableNode.h"
+
 
 class PanoramaViewController : public GLViewController {
 private:
     GLuint vao;
     std::vector<Vertex> vertices;
     std::vector<Triangle> faces;
-    GLfloat projectionMatrix[16];
+    std::vector<DrawableNode> panoramas;
     
 protected:
     static float fieldOfView;
@@ -47,9 +49,6 @@ public:
     virtual void runScene();
     
     void updateShaderMatrices();
-    
-    void initPanoVertices(uint width = 12, uint height = 6);
-    void buildPerspective(GLfloat* matrix, GLuint width, GLuint height, GLfloat near = 0.001, GLfloat far = 50.0, GLfloat angleOfView = 45.0);
     
 };
 

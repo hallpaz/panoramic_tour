@@ -9,22 +9,19 @@
 #define TEXTURE_H_
 
 #include <string>
+#include <FreeImage.h>
+
 
 class Texture {
 private:
-	size_t width;
-	size_t height;
-	unsigned char *pixels;
+    FIBITMAP *bitmap;
+
 public:
-	Texture(unsigned char * pxls, size_t w, size_t h);
-	Texture(const Texture& copy);
-	Texture(const char *filename);
     
-	void initFromFile(const char *filename);
+    Texture(std::string filename);
 	virtual ~Texture();
 
-	Texture& operator=(Texture& texture);
-	const unsigned char *getPixels();
+	BYTE *getData();
 	size_t getWidth();
 	size_t getHeight();
 };

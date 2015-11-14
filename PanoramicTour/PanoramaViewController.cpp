@@ -5,30 +5,23 @@
 //  Created by Hallison da Paz on 23/10/2015.
 //  Copyright © 2015 Visgraf. All rights reserved.
 //
-#define cimg_use_openexr
 
 #include "PanoramaViewController.h"
 #include "Filepaths.h"
 
-#include <CImg.h>
 #include <cmath>
 #include <fstream>
 
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/euler_angles.hpp>
 
-#include "Math/Matrix4.h"
-
 #include "Utils.hpp"
-
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/euler_angles.hpp>
 
-
-using namespace cimg_library;
 
 float PanoramaViewController::fieldOfView = 45.0;
 bool PanoramaViewController::perspectiveChanged = false;
@@ -47,26 +40,19 @@ PanoramaViewController::PanoramaViewController(){
     // Create a Vertex Buffer Object and copy the vertex data to it
     GLuint vbo;
     glGenBuffers(1, &vbo);
-    
-    //initVertices();
-    initPanoVertices(100, 50);
-    
-    //buildPerspective(&projectionMatrix[0], 800, 600);
-    //currentCamera = new Camera(800, 600, PanoramaViewController::fieldOfView);
 
     currentCamera = new Camera(800, 600, PanoramaViewController::fieldOfView);
-
+    DrawableNode myScene("/Users/hallpaz/Workspace/PanoramicTour/PanoramicTour/scene_descriptions/cameraA.json");
+    panoramas.push_back(myScene);
     
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size()*sizeof(Vertex), &vertices.front(), GL_STATIC_DRAW);
-    //cout << "Vertices size: " << vertices.size() << endl;
+    glBufferData(GL_ARRAY_BUFFER, myScene.sizeOfVertices(), myScene.vertexBufferData(), GL_STATIC_DRAW);
     
     // Create an element array
     GLuint ebo;
     glGenBuffers(1, &ebo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, faces.size()*sizeof(Triangle), &faces.front(), GL_STATIC_DRAW);
-    //cout << "faces size: " << faces.size() << endl;
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, myScene.sizeOfIndices(), myScene.indexBufferData(), GL_STATIC_DRAW);
     
     currentShader = new LPShader(PATH_BASIC_TEXTURE_VSH, PATH_BASIC_TEXTURE_FSH);
     currentShader->linkProgram();
@@ -76,30 +62,24 @@ PanoramaViewController::PanoramaViewController(){
     // Specify the layout of the vertex data
     GLint posAttrib = glGetAttribLocation(shaderProgram, "position");
     glEnableVertexAttribArray(posAttrib);
-    //glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 0, 0);
-    
     glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
     
     GLint texAttrib = glGetAttribLocation(shaderProgram, "texcoord");
     glEnableVertexAttribArray(texAttrib);
-    
-    
     glVertexAttribPointer(texAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(texOffset3D));
     
-    // Load textures
-    GLuint texture;
-    glGenTextures(1, &texture);
     
     int width, height;
-    
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture);
     FIBITMAP* bitmap = FreeImage_Load(FreeImage_GetFileType(PATH_Background_rgbA_PNG.c_str(), 0), PATH_Background_rgbB_PNG.c_str());
     cout << FreeImage_GetBPP(bitmap) << endl;
     width = FreeImage_GetWidth(bitmap);
     height = FreeImage_GetHeight(bitmap);
-    cout << width << " x " << height << endl;
     
+    // Load textures
+    GLuint texture;
+    glGenTextures(1, &texture);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_BGR, GL_UNSIGNED_BYTE, FreeImage_GetBits(bitmap));
     
     FreeImage_Unload(bitmap);
@@ -117,14 +97,11 @@ PanoramaViewController::PanoramaViewController(){
     
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
-    
 
     updateShaderMatrices();
     
     configureInput();
     glfwGetCursorPos(window, &PanoramaViewController::lastMouseX, &PanoramaViewController::lastMouseY);
-    
-    write_Ply(vertices, faces, "/Users/hallpaz/cenaA.ply");
     
 }
 
@@ -153,7 +130,7 @@ void PanoramaViewController::update(float rate){
 void PanoramaViewController::draw(){
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glDrawElements(GL_TRIANGLES, (GLsizei) faces.size()*3, GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, (GLsizei) panoramas[0].numOfIndices(), GL_UNSIGNED_INT, 0);
     
     glfwSwapBuffers(window);
 }
@@ -167,72 +144,6 @@ void PanoramaViewController::runScene(){
         draw();
         glfwPollEvents();
     }
-
-}
-
-void PanoramaViewController::initPanoVertices(unsigned int width, unsigned int height){
-    CImg<float> image(PATH_Background_depthB_PNG.c_str());
-    unsigned int paralelos = image.height();
-    unsigned int meridianos = image.width();
-    
-    float theta = 0.005;
-    float phi = 0.00;
-    //auxiliar variables
-    
-    //I need to add 1 to the total number of meridian, because I need one duplicated vertex at each parallel
-    unsigned int numVertices = (meridianos+1)*paralelos;
-    cout << "numVertices: " << numVertices << endl;
-    unsigned int numIndices = 6*(meridianos+1)*(paralelos-1);
-    cout << "numIndices: " << numIndices << endl;
-
-    int j = 0; int i = 0;
-    float u, v, depth;
-    for(theta = 0.00005; theta < M_PI; theta += (M_PI - 0.0001)/(paralelos-1)){
-        for(phi = 0.0; phi < 2*M_PI; phi += 2*M_PI/meridianos){
-            //Position coordinates
-            depth = image(i, j);
-            //u = 1.0 - phi/(2*M_PI);
-            u = phi/(2*M_PI);
-            v = 1.0 - theta/M_PI;
-
-            vertices.push_back(Vertex{ glm::vec3(depth*sin(theta)*sin(phi), depth*cos(theta), depth*sin(theta)*cos(phi)),
-                glm::vec2(u, v),
-                glm::vec3(0.0, 0.0, 0.0) });
-            ++i;
-        }
-        phi = 0.0;
-        i = 0;
-        depth = image(i, j);
-        ++j;
-        //u = 0.0;
-        u = 1.0;
-        v = 1.0 - theta/M_PI;
-        
-        vertices.push_back(Vertex{ glm::vec3(depth*sin(theta)*sin(phi), depth*cos(theta), depth*sin(theta)*cos(phi)),
-            glm::vec2(u, v),
-            glm::vec3(0.0, 0.0, 0.0) });
-    }
-    
-    double discontinuity_threshold = 0.1;
-    for(i = 0; i < paralelos; ++i){
-        for (j = 0; j < meridianos; ++j) {
-//            if (((j+1) < meridianos) && (abs(image(i,j) - image(i, (j+1)%meridianos)) > discontinuity_threshold)) {
-//                continue;
-//            }
-            if(i+1 < paralelos){
-//                if(abs(image(i,j) - image(i+1, j)) > discontinuity_threshold){
-//                    continue;
-//                }
-                faces.push_back( { i*(meridianos+1) + j, (i+1)*(meridianos+1) +j, i*(meridianos+1) + j+1  });
-            }
-            
-            if(i-1 > 0){
-                faces.push_back( {(i-1)*(meridianos+1) + j+1, i*(meridianos+1) + j, i*(meridianos+1) + j+1});
-            }
-        }
-    }
-    cout << "indices vector size: " << faces.size() << endl;
-    
 }
 
 

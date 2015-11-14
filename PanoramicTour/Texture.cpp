@@ -10,70 +10,38 @@
 #include <iostream>
 
 
-
 /**
- * Constructor.
- * @param pxls: GLubyte pointer which holds RGBA coordinates.
- * @param w:    texture image width
- * @param h:    texture image height
+ * Constructor. This method creates a new texture from the path of an image to be used as texture
  */
-Texture::Texture(unsigned char *pxls, size_t w, size_t h) {
-	//TODO think about references
-	pixels = pxls;
-	width = w;
-	height = h;
-    //loadTexture("living room");
+Texture::Texture(std::string imageName) {
+    bitmap = FreeImage_Load(FreeImage_GetFileType(imageName.c_str(), 0), imageName.c_str());
 }
+
 /**
  * Destructor. Releases memory allocated to pixels attribute
  */
 Texture::~Texture() {
-	delete[] pixels;
+    FreeImage_Unload(bitmap);
 }
 /**
- * Returns a GLubyte pointer with RGBA coordinates.
+ * Returns a GLubyte pointer with RGB/RGBA coordinates.
  */
-const unsigned char *Texture::getPixels() {
-	return pixels;
+BYTE *Texture::getData() {
+    return FreeImage_GetBits(bitmap);
 }
+
 /**
  * Returns texture image width
  */
 size_t Texture::getWidth() {
-	return width;
-}
-
-//TODO implement this method
-Texture& Texture::operator =(Texture& texture) {
-	if(this != &texture){
-		//do something
-	}
-	return *this;
+    return FreeImage_GetWidth(bitmap);
 }
 
 /**
  * Returns texture image height
  */
 size_t Texture::getHeight() {
-	return height;
+	return FreeImage_GetHeight(bitmap);
 }
 
-/**
- * Constructor. This method creates a new texture from the path of an image to be used as texture
- */
-Texture::Texture(const char* imageName) {
-    
-}
 
-/**
- * Copy constructor
- */
-Texture::Texture(const Texture& copy) {
-	size_t max;
-	width = copy.width; height = copy.height;
-	max = width*height;
-	pixels = new unsigned char[max];
-	for(int i = 0; i < max; i++){
-		pixels[i] = copy.pixels[i];
-	}
-}

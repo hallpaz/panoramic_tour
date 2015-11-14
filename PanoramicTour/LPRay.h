@@ -8,7 +8,6 @@
 #ifndef RAY_H_
 #define RAY_H_
 
-#include "Vector3.h"
 #include "Displacement.h"
 
 namespace LayerSceneGraph {
