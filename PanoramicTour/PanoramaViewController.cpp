@@ -39,8 +39,12 @@ void configTexParams(int texture_wrap_s, int texture_wrap_t, int texture_min_fil
 PanoramaViewController::PanoramaViewController(){
     
     currentCamera = new Camera(800, 600, PanoramaViewController::fieldOfView);
-    DrawableNode myScene("/Users/hallpaz/Workspace/PanoramicTour/PanoramicTour/scene_descriptions/cameraA.json");
-    panoramas.push_back(myScene);
+    DrawableNode sceneA("/Users/hallpaz/Workspace/PanoramicTour/PanoramicTour/scene_descriptions/cameraA.json");
+    DrawableNode sceneB("/Users/hallpaz/Workspace/PanoramicTour/PanoramicTour/scene_descriptions/cameraB.json");
+    DrawableNode sceneC("/Users/hallpaz/Workspace/PanoramicTour/PanoramicTour/scene_descriptions/cameraC.json");
+    //panoramas.push_back(sceneA);
+    //panoramas.push_back(sceneB);
+    panoramas.push_back(sceneC);
     
     currentShader = new LPShader(PATH_BASIC_TEXTURE_VSH, PATH_BASIC_TEXTURE_FSH);
     currentShader->linkProgram();
@@ -49,32 +53,10 @@ PanoramaViewController::PanoramaViewController(){
     
     prepareVAOs();
     
-    int width, height;
-    FIBITMAP* bitmap = FreeImage_Load(FreeImage_GetFileType(PATH_Background_rgbA_PNG.c_str(), 0),
-                                      PATH_Background_rgbA_PNG.c_str());
-    width = FreeImage_GetWidth(bitmap);
-    height = FreeImage_GetHeight(bitmap);
-    
-    // Load textures
-    GLuint texture;
-    glGenTextures(1, &texture);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
-                 width, height,
-                 0, GL_BGR, GL_UNSIGNED_BYTE, FreeImage_GetBits(bitmap));
-    
-    FreeImage_Unload(bitmap);
-    glUniform1i(glGetUniformLocation(shaderProgram, "texSampler"), 0);
-    
-    myTextures.push_back(texture);
-    
     configTexParams(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_LINEAR, GL_LINEAR);
     
     enableCulling(GL_CW, GL_BACK);
     enableDepthTest(GL_LESS);
-    
-    //currentCamera->setPosition(myScene.getPosition());
     
     updateShaderMatrices();
     
@@ -211,6 +193,7 @@ void configTexParams(int texture_wrap_s, int texture_wrap_t, int texture_min_fil
 }
 
 void PanoramaViewController::prepareVAOs(){
+    int i = 0;
     for(std::vector<DrawableNode>::iterator pano_it = panoramas.begin(); pano_it != panoramas.end(); ++pano_it){
         GLuint vao;
         
@@ -239,6 +222,24 @@ void PanoramaViewController::prepareVAOs(){
         glVertexAttribPointer(texAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(texOffset3D));
         
         myVAOs.push_back(vao);
+        
+        Texture *sceneTexture = pano_it->getTexture();
+        
+        // Load textures
+        GLuint texture;
+        glGenTextures(1, &texture);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
+                     (GLsizei) sceneTexture->getWidth(), (GLsizei) sceneTexture->getHeight(),
+                     0, GL_BGR, GL_UNSIGNED_BYTE, sceneTexture->getData());
+        
+        //FreeImage_Unload(bitmap);
+        sceneTexture->unload(); sceneTexture = nullptr;
+        glUniform1i(glGetUniformLocation(currentShader->getProgram(), "texSampler"), 0);
+        
+        myTextures.push_back(texture);
+        std::cout << i << std::endl;
         
     }
 }

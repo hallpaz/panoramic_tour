@@ -116,7 +116,6 @@ std::string LPShader::readShaderFile(const GLchar *filename, int shaderType)
     ifs.close();
     std::string content = buffer.str();
     
-    //cout << content << endl;
     return content;
 }
 

@@ -15,15 +15,18 @@
 class Texture {
 private:
     FIBITMAP *bitmap;
+    unsigned int width;
+    unsigned int height;
 
 public:
     
     Texture(std::string filename);
 	virtual ~Texture();
 
-	BYTE *getData();
-	size_t getWidth() const;
-	size_t getHeight() const;
+	void *getData();
+    void unload();
+	unsigned int getWidth();
+	unsigned int getHeight();
 };
 
 #endif /* TEXTURE_H_ */

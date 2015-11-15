@@ -18,7 +18,6 @@ DrawableNode::DrawableNode(std::string descriptionFile) {
         //std::cout << descriptionStream << std::endl;
         
         descriptionStream >> scene_json;
-        std::cout << scene_json;
        
     }
     else{
@@ -34,7 +33,7 @@ DrawableNode::DrawableNode(std::string descriptionFile) {
                                 scene_json["model_position"]["z"] ));
     
 	mesh = nullptr;
-    texture = nullptr;
+    //texture = nullptr;
     //material = nullptr;
 }
 
@@ -49,11 +48,11 @@ void DrawableNode::createMeshFromDepthImage(std::string image_path){
     //auxiliar variables
     
     //I need to add 1 to the total number of meridian, because I need one duplicated vertex at each parallel
-    unsigned int numVertices = (meridianos+1)*paralelos;
-    std::cout << "numVertices: " << numVertices << std::endl;
+    //unsigned int numVertices = (meridianos+1)*paralelos;
+    //std::cout << "numVertices: " << numVertices << std::endl;
     
-    unsigned int numIndices = 6*(meridianos+1)*(paralelos-1);
-    std::cout << "numIndices: " << numIndices << std::endl;
+    //unsigned int numIndices = 6*(meridianos+1)*(paralelos-1);
+    //std::cout << "numIndices: " << numIndices << std::endl;
     
     int j = 0; int i = 0;
     float u, v, depth;
@@ -94,12 +93,15 @@ void DrawableNode::createMeshFromDepthImage(std::string image_path){
             }
         }
     }
-    std::cout << "indices vector size: " << indexBuffer.size() << std::endl;
+    //std::cout << "indices vector size: " << indexBuffer.size() << std::endl;
     
 }
 
 DrawableNode::~DrawableNode() {
-    delete texture;
+//    if(texture != nullptr) {
+//        texture->unload();
+//        texture = nullptr;
+//    }
 }
 
 /**
