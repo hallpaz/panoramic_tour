@@ -26,7 +26,12 @@ DrawableNode::DrawableNode(std::string descriptionFile) {
     }
     
     createMeshFromDepthImage(scene_json["depth_images_files"][0]);
-    texture = new Texture(scene_json["rgb_images_files"]);
+    std::string rgbImagePath = scene_json["rgb_images_files"][0];
+    texture = new Texture( rgbImagePath );
+    
+    this->setPosition(glm::vec3(scene_json["model_position"]["x"],
+                                scene_json["model_position"]["y"],
+                                scene_json["model_position"]["z"] ));
     
 	mesh = nullptr;
     texture = nullptr;
@@ -119,6 +124,10 @@ void *DrawableNode::vertexBufferData(){
 
 void *DrawableNode::indexBufferData(){
     return &indexBuffer.front();
+}
+
+Texture *DrawableNode::getTexture(){
+    return texture;
 }
 
 unsigned long DrawableNode::numOfIndices(){

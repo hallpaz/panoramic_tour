@@ -48,8 +48,10 @@ public:
     
     void createMeshFromDepthImage(std::string image_path);
     void createTextureFromRGBImage(std::string image_path);
-    void* vertexBufferData();
-    void* indexBufferData();
+    void *vertexBufferData();
+    void *indexBufferData();
+    Texture *getTexture();
+    
     unsigned long numOfIndices();
     unsigned long sizeOfIndices();
     unsigned long sizeOfVertices();

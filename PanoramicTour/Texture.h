@@ -22,8 +22,8 @@ public:
 	virtual ~Texture();
 
 	BYTE *getData();
-	size_t getWidth();
-	size_t getHeight();
+	size_t getWidth() const;
+	size_t getHeight() const;
 };
 
 #endif /* TEXTURE_H_ */

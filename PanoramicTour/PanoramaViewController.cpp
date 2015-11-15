@@ -32,46 +32,26 @@ double PanoramaViewController::lastMouseX = 800.0/2.0;
 double PanoramaViewController::lastMouseY = 600.0/2.0;
 
 
+void enableCulling(int windingMode, int orientation);
+void enableDepthTest(int depthFunction);
+void configTexParams(int texture_wrap_s, int texture_wrap_t, int texture_min_filter, int texture_mag_filter);
+
 PanoramaViewController::PanoramaViewController(){
     
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
-    
-    // Create a Vertex Buffer Object and copy the vertex data to it
-    GLuint vbo;
-    glGenBuffers(1, &vbo);
-
     currentCamera = new Camera(800, 600, PanoramaViewController::fieldOfView);
     DrawableNode myScene("/Users/hallpaz/Workspace/PanoramicTour/PanoramicTour/scene_descriptions/cameraA.json");
     panoramas.push_back(myScene);
-    
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, myScene.sizeOfVertices(), myScene.vertexBufferData(), GL_STATIC_DRAW);
-    
-    // Create an element array
-    GLuint ebo;
-    glGenBuffers(1, &ebo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, myScene.sizeOfIndices(), myScene.indexBufferData(), GL_STATIC_DRAW);
     
     currentShader = new LPShader(PATH_BASIC_TEXTURE_VSH, PATH_BASIC_TEXTURE_FSH);
     currentShader->linkProgram();
     GLuint shaderProgram = currentShader->getProgram();
     glUseProgram(shaderProgram);
     
-    // Specify the layout of the vertex data
-    GLint posAttrib = glGetAttribLocation(shaderProgram, "position");
-    glEnableVertexAttribArray(posAttrib);
-    glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
-    
-    GLint texAttrib = glGetAttribLocation(shaderProgram, "texcoord");
-    glEnableVertexAttribArray(texAttrib);
-    glVertexAttribPointer(texAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(texOffset3D));
-    
+    prepareVAOs();
     
     int width, height;
-    FIBITMAP* bitmap = FreeImage_Load(FreeImage_GetFileType(PATH_Background_rgbA_PNG.c_str(), 0), PATH_Background_rgbB_PNG.c_str());
-    cout << FreeImage_GetBPP(bitmap) << endl;
+    FIBITMAP* bitmap = FreeImage_Load(FreeImage_GetFileType(PATH_Background_rgbA_PNG.c_str(), 0),
+                                      PATH_Background_rgbA_PNG.c_str());
     width = FreeImage_GetWidth(bitmap);
     height = FreeImage_GetHeight(bitmap);
     
@@ -80,24 +60,22 @@ PanoramaViewController::PanoramaViewController(){
     glGenTextures(1, &texture);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_BGR, GL_UNSIGNED_BYTE, FreeImage_GetBits(bitmap));
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
+                 width, height,
+                 0, GL_BGR, GL_UNSIGNED_BYTE, FreeImage_GetBits(bitmap));
     
     FreeImage_Unload(bitmap);
     glUniform1i(glGetUniformLocation(shaderProgram, "texSampler"), 0);
     
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    myTextures.push_back(texture);
     
+    configTexParams(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_LINEAR, GL_LINEAR);
     
-    glEnable(GL_CULL_FACE);
-    glFrontFace(GL_CW);
-    glCullFace(GL_BACK);
+    enableCulling(GL_CW, GL_BACK);
+    enableDepthTest(GL_LESS);
     
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
-
+    //currentCamera->setPosition(myScene.getPosition());
+    
     updateShaderMatrices();
     
     configureInput();
@@ -117,7 +95,7 @@ void PanoramaViewController::updateShaderMatrices()
 
 void PanoramaViewController::update(float rate){
     
-    currentCamera->setPosition(movement[1], 0.0, movement[0]);
+    currentCamera->setPosition(movement[1], -1.15, movement[0]);
     
     glm::mat4 orientationMatrix = glm::eulerAngleXYZ<float>(glm::radians(PanoramaViewController::verticalAngle),
                                                      glm::radians(PanoramaViewController::horizontalAngle),
@@ -130,7 +108,20 @@ void PanoramaViewController::update(float rate){
 void PanoramaViewController::draw(){
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glDrawElements(GL_TRIANGLES, (GLsizei) panoramas[0].numOfIndices(), GL_UNSIGNED_INT, 0);
+    
+    for (int i = 0; i < panoramas.size(); ++i) {
+        
+        glBindVertexArray(myVAOs[i]);
+        glBindTexture(GL_TEXTURE_2D, myTextures[i]);
+        
+        GLint matrixHandle = glGetUniformLocation(currentShader->getProgram(), "modelMatrix");
+        glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, glm::value_ptr(panoramas[i].getTransform()) );
+        
+        glDrawElements(GL_TRIANGLES, (GLsizei) panoramas[0].numOfIndices(), GL_UNSIGNED_INT, 0);
+    }
+    
+    glBindVertexArray(0);
+    glBindTexture(GL_TEXTURE_2D, 0);
     
     glfwSwapBuffers(window);
 }
@@ -199,4 +190,55 @@ void PanoramaViewController::configureInput(){
 PanoramaViewController::~PanoramaViewController()
 {
     delete currentCamera;
+}
+
+void enableCulling(int windingMode, int orientation){
+    glEnable(GL_CULL_FACE);
+    glFrontFace(windingMode);
+    glCullFace(orientation);
+}
+
+void enableDepthTest(int depthFunction){
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(depthFunction);
+}
+
+void configTexParams(int texture_wrap_s, int texture_wrap_t, int texture_min_filter, int texture_mag_filter){
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+}
+
+void PanoramaViewController::prepareVAOs(){
+    for(std::vector<DrawableNode>::iterator pano_it = panoramas.begin(); pano_it != panoramas.end(); ++pano_it){
+        GLuint vao;
+        
+        glGenVertexArrays(1, &vao);
+        glBindVertexArray(vao);
+        
+        // Create a Vertex Buffer Object and copy the vertex data to it
+        GLuint vbo;
+        glGenBuffers(1, &vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glBufferData(GL_ARRAY_BUFFER, pano_it->sizeOfVertices(), pano_it->vertexBufferData(), GL_STATIC_DRAW);
+        
+        // Create an element array
+        GLuint ebo;
+        glGenBuffers(1, &ebo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, pano_it->sizeOfIndices(), pano_it->indexBufferData(), GL_STATIC_DRAW);
+        
+        // Specify the layout of the vertex data
+        GLint posAttrib = glGetAttribLocation(currentShader->getProgram(), "position");
+        glEnableVertexAttribArray(posAttrib);
+        glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
+        
+        GLint texAttrib = glGetAttribLocation(currentShader->getProgram(), "texcoord");
+        glEnableVertexAttribArray(texAttrib);
+        glVertexAttribPointer(texAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(texOffset3D));
+        
+        myVAOs.push_back(vao);
+        
+    }
 }

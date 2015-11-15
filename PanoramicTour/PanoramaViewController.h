@@ -26,6 +26,9 @@ private:
     std::vector<Triangle> faces;
     std::vector<DrawableNode> panoramas;
     
+    std::vector<GLuint> myVAOs;
+    std::vector<GLuint> myTextures;
+    
 protected:
     static float fieldOfView;
     static bool perspectiveChanged;
@@ -40,6 +43,8 @@ protected:
     static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
     static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos);
     static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+    
+    void prepareVAOs();
     
 public:
     PanoramaViewController();

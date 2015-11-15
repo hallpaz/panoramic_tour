@@ -26,21 +26,21 @@ Texture::~Texture() {
 /**
  * Returns a GLubyte pointer with RGB/RGBA coordinates.
  */
-BYTE *Texture::getData() {
+BYTE *Texture::getData(){
     return FreeImage_GetBits(bitmap);
 }
 
 /**
  * Returns texture image width
  */
-size_t Texture::getWidth() {
+size_t Texture::getWidth() const{
     return FreeImage_GetWidth(bitmap);
 }
 
 /**
  * Returns texture image height
  */
-size_t Texture::getHeight() {
+size_t Texture::getHeight() const{
 	return FreeImage_GetHeight(bitmap);
 }
 
