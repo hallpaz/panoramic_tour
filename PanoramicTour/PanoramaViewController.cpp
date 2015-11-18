@@ -36,14 +36,18 @@ void enableCulling(int windingMode, int orientation);
 void enableDepthTest(int depthFunction);
 void configTexParams(int texture_wrap_s, int texture_wrap_t, int texture_min_filter, int texture_mag_filter);
 
+
+bool shouldDrawPanoB = false;
+bool shouldDrawPanoC = false;
+
 PanoramaViewController::PanoramaViewController(){
     
-    currentCamera = new Camera(800, 600, PanoramaViewController::fieldOfView);
-    DrawableNode sceneA("/Users/hallpaz/Workspace/PanoramicTour/PanoramicTour/scene_descriptions/cameraA.json");
+    currentCamera = new Camera(1024, 768, PanoramaViewController::fieldOfView);
+    //DrawableNode sceneA("/Users/hallpaz/Workspace/PanoramicTour/PanoramicTour/scene_descriptions/cameraA.json");
     DrawableNode sceneB("/Users/hallpaz/Workspace/PanoramicTour/PanoramicTour/scene_descriptions/cameraB.json");
     DrawableNode sceneC("/Users/hallpaz/Workspace/PanoramicTour/PanoramicTour/scene_descriptions/cameraC.json");
     //panoramas.push_back(sceneA);
-    //panoramas.push_back(sceneB);
+    panoramas.push_back(sceneB);
     panoramas.push_back(sceneC);
     
     currentShader = new LPShader(PATH_BASIC_TEXTURE_VSH, PATH_BASIC_TEXTURE_FSH);
@@ -52,8 +56,6 @@ PanoramaViewController::PanoramaViewController(){
     glUseProgram(shaderProgram);
     
     prepareVAOs();
-    
-    configTexParams(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_LINEAR, GL_LINEAR);
     
     enableCulling(GL_CW, GL_BACK);
     enableDepthTest(GL_LESS);
@@ -88,19 +90,40 @@ void PanoramaViewController::update(float rate){
 }
 
 void PanoramaViewController::draw(){
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
-    for (int i = 0; i < panoramas.size(); ++i) {
-        
-        glBindVertexArray(myVAOs[i]);
-        glBindTexture(GL_TEXTURE_2D, myTextures[i]);
+   
+    if (shouldDrawPanoB) {
+        glBindVertexArray(myVAOs[0]);
+        glBindTexture(GL_TEXTURE_2D, myTextures[0]);
         
         GLint matrixHandle = glGetUniformLocation(currentShader->getProgram(), "modelMatrix");
-        glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, glm::value_ptr(panoramas[i].getTransform()) );
+        glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, glm::value_ptr(panoramas[0].getTransform()) );
         
         glDrawElements(GL_TRIANGLES, (GLsizei) panoramas[0].numOfIndices(), GL_UNSIGNED_INT, 0);
     }
+    
+    if (shouldDrawPanoC) {
+        glBindVertexArray(myVAOs[1]);
+        glBindTexture(GL_TEXTURE_2D, myTextures[1]);
+        
+        GLint matrixHandle = glGetUniformLocation(currentShader->getProgram(), "modelMatrix");
+        glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, glm::value_ptr(panoramas[1].getTransform()) );
+        
+        glDrawElements(GL_TRIANGLES, (GLsizei) panoramas[1].numOfIndices(), GL_UNSIGNED_INT, 0);
+    }
+    
+//    for (int i = 0; i < panoramas.size(); ++i) {
+//        
+//        glBindVertexArray(myVAOs[i]);
+//        glBindTexture(GL_TEXTURE_2D, myTextures[i]);
+//        
+//        GLint matrixHandle = glGetUniformLocation(currentShader->getProgram(), "modelMatrix");
+//        glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, glm::value_ptr(panoramas[i].getTransform()) );
+//        
+//        glDrawElements(GL_TRIANGLES, (GLsizei) panoramas[i].numOfIndices(), GL_UNSIGNED_INT, 0);
+//    }
     
     glBindVertexArray(0);
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -160,6 +183,15 @@ void PanoramaViewController::key_callback(GLFWwindow *window, int key, int scanc
     if (key == ( GLFW_KEY_ESCAPE ) && (action == GLFW_PRESS)){
         glfwSetWindowShouldClose(window, true);
     }
+    
+    if (key == ( GLFW_KEY_B ) && (action == GLFW_PRESS)){
+        shouldDrawPanoB = !shouldDrawPanoB;
+    }
+    
+    if (key == ( GLFW_KEY_C ) && (action == GLFW_PRESS)){
+        shouldDrawPanoC = !shouldDrawPanoC;
+    }
+    
 }
 
 void PanoramaViewController::configureInput(){
@@ -237,6 +269,7 @@ void PanoramaViewController::prepareVAOs(){
         //FreeImage_Unload(bitmap);
         sceneTexture->unload(); sceneTexture = nullptr;
         glUniform1i(glGetUniformLocation(currentShader->getProgram(), "texSampler"), 0);
+        configTexParams(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_LINEAR, GL_LINEAR);
         
         myTextures.push_back(texture);
         std::cout << i << std::endl;

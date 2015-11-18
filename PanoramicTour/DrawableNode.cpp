@@ -45,14 +45,6 @@ void DrawableNode::createMeshFromDepthImage(std::string image_path){
     
     float theta = 0.005;
     float phi = 0.00;
-    //auxiliar variables
-    
-    //I need to add 1 to the total number of meridian, because I need one duplicated vertex at each parallel
-    //unsigned int numVertices = (meridianos+1)*paralelos;
-    //std::cout << "numVertices: " << numVertices << std::endl;
-    
-    //unsigned int numIndices = 6*(meridianos+1)*(paralelos-1);
-    //std::cout << "numIndices: " << numIndices << std::endl;
     
     int j = 0; int i = 0;
     float u, v, depth;
@@ -60,7 +52,7 @@ void DrawableNode::createMeshFromDepthImage(std::string image_path){
         for(phi = 0.0; phi < 2*M_PI; phi += 2*M_PI/meridianos){
             //Position coordinates
             depth = image(i, j);
-            //u = 1.0 - phi/(2*M_PI);
+
             u = phi/(2*M_PI);
             v = 1.0 - theta/M_PI;
             
@@ -73,7 +65,7 @@ void DrawableNode::createMeshFromDepthImage(std::string image_path){
         i = 0;
         depth = image(i, j);
         ++j;
-        //u = 0.0;
+
         u = 1.0;
         v = 1.0 - theta/M_PI;
         
@@ -81,9 +73,24 @@ void DrawableNode::createMeshFromDepthImage(std::string image_path){
             glm::vec2(u, v),
             glm::vec3(0.0, 0.0, 0.0) });
     }
-    
+    //compute triangulation
+    double distanceThreshold = 0.50;
+    double mindist = 100.0, maxdist = -1.0;
     for(i = 0; i < paralelos; ++i){
         for (j = 0; j < meridianos; ++j) {
+            if( ((j+1) < meridianos)){
+                double currentDistance = std::abs(image(j,i) - image(j+1, i));
+                if(currentDistance < mindist){
+                    mindist = currentDistance;
+                }
+                if (currentDistance > maxdist) {
+                    maxdist = currentDistance;
+                }
+                if ((currentDistance) > distanceThreshold ) {
+                    std::cout << i << ", " << j << std::endl;
+                    continue;
+                }
+            }
             if(i+1 < paralelos){
                 indexBuffer.push_back( { i*(meridianos+1) + j, (i+1)*(meridianos+1) +j, i*(meridianos+1) + j+1  });
             }
@@ -93,6 +100,7 @@ void DrawableNode::createMeshFromDepthImage(std::string image_path){
             }
         }
     }
+    std::cout << "min: " << mindist << " max: " << maxdist << std::endl;
     //std::cout << "indices vector size: " << indexBuffer.size() << std::endl;
     
 }
