@@ -19,6 +19,8 @@
 #include "DrawableNode.h"
 
 
+struct SceneBatch;
+
 class PanoramaViewController : public GLViewController {
 private:
     GLuint vao;
@@ -28,6 +30,7 @@ private:
     
     std::vector<GLuint> myVAOs;
     std::vector<GLuint> myTextures;
+    std::vector<SceneBatch> mySceneBatches;
     
 protected:
     static float fieldOfView;

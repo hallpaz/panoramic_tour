@@ -2,5 +2,5 @@
     "num_of_layers":1,
     "depth_images_files": ["/Users/hallpaz/Workspace/PanoramicTour/PanoramicTour/images/depth_1024/Background_depthB.exr"],
     "rgb_images_files": ["/Users/hallpaz/Workspace/PanoramicTour/PanoramicTour/images/rgb-2048/Background_rgbB.png"],
-    "model_position": {"x": -1.30,  "y": 1.15, "z": -4.30}
+    "model_position": {"x": 1.30,  "y": 1.15, "z": -4.30}
 }

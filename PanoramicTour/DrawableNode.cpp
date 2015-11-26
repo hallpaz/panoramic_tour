@@ -15,7 +15,6 @@ DrawableNode::DrawableNode(std::string descriptionFile) {
     json scene_json;
     
     if (descriptionStream.is_open()) {
-        //std::cout << descriptionStream << std::endl;
         
         descriptionStream >> scene_json;
        
@@ -56,7 +55,7 @@ void DrawableNode::createMeshFromDepthImage(std::string image_path){
             u = phi/(2*M_PI);
             v = 1.0 - theta/M_PI;
             
-            vertexBuffer.push_back(Vertex{ glm::vec3(depth*sin(theta)*sin(phi), depth*cos(theta), depth*sin(theta)*cos(phi)),
+            vertexBuffer.push_back(Vertex{ glm::vec3(-depth*sin(theta)*sin(phi), depth*cos(theta), depth*sin(theta)*cos(phi)),
                 glm::vec2(u, v),
                 glm::vec3(0.0, 0.0, 0.0) });
             ++i;
@@ -69,15 +68,21 @@ void DrawableNode::createMeshFromDepthImage(std::string image_path){
         u = 1.0;
         v = 1.0 - theta/M_PI;
         
-        vertexBuffer.push_back(Vertex{ glm::vec3(depth*sin(theta)*sin(phi), depth*cos(theta), depth*sin(theta)*cos(phi)),
+        vertexBuffer.push_back(Vertex{ glm::vec3(-depth*sin(theta)*sin(phi), depth*cos(theta), depth*sin(theta)*cos(phi)),
             glm::vec2(u, v),
             glm::vec3(0.0, 0.0, 0.0) });
     }
     //compute triangulation
-    double distanceThreshold = 0.50;
+    double distanceThreshold = 0.2;
     double mindist = 100.0, maxdist = -1.0;
     for(i = 0; i < paralelos; ++i){
         for (j = 0; j < meridianos; ++j) {
+            
+            if( image(j, i) > 5.95){
+                continue;
+            }
+            
+            
             if( ((j+1) < meridianos)){
                 double currentDistance = std::abs(image(j,i) - image(j+1, i));
                 if(currentDistance < mindist){
@@ -87,11 +92,23 @@ void DrawableNode::createMeshFromDepthImage(std::string image_path){
                     maxdist = currentDistance;
                 }
                 if ((currentDistance) > distanceThreshold ) {
-                    std::cout << i << ", " << j << std::endl;
+                    //std::cout << i << ", " << j << std::endl;
                     continue;
                 }
             }
             if(i+1 < paralelos){
+//                double currentDistance = std::abs(image(j,i) - image(j, i+1));
+//                if(currentDistance < mindist){
+//                    mindist = currentDistance;
+//                }
+//                if (currentDistance > maxdist) {
+//                    maxdist = currentDistance;
+//                }
+//                if ((currentDistance) > distanceThreshold ) {
+//                    std::cout << i << ", " << j << std::endl;
+//                    continue;
+//                }
+                
                 indexBuffer.push_back( { i*(meridianos+1) + j, (i+1)*(meridianos+1) +j, i*(meridianos+1) + j+1  });
             }
             

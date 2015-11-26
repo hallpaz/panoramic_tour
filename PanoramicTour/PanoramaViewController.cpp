@@ -37,16 +37,33 @@ void enableDepthTest(int depthFunction);
 void configTexParams(int texture_wrap_s, int texture_wrap_t, int texture_min_filter, int texture_mag_filter);
 
 
-bool shouldDrawPanoB = false;
-bool shouldDrawPanoC = false;
+bool shouldDrawPanoB = true;
+bool shouldDrawPanoC = true;
+bool shouldDrawPanoA = true;
+
+
+struct SceneBatch{
+    GLuint vao;
+    GLuint texture;
+    GLuint index;
+    glm::vec3 center;
+    double distance;
+    bool operator<(const SceneBatch &rhs) const{
+        if(distance < rhs.distance){
+            return true;
+        }
+        return false;
+    }
+};
 
 PanoramaViewController::PanoramaViewController(){
     
     currentCamera = new Camera(1024, 768, PanoramaViewController::fieldOfView);
-    //DrawableNode sceneA("/Users/hallpaz/Workspace/PanoramicTour/PanoramicTour/scene_descriptions/cameraA.json");
+    DrawableNode sceneA("/Users/hallpaz/Workspace/PanoramicTour/PanoramicTour/scene_descriptions/cameraA.json");
     DrawableNode sceneB("/Users/hallpaz/Workspace/PanoramicTour/PanoramicTour/scene_descriptions/cameraB.json");
     DrawableNode sceneC("/Users/hallpaz/Workspace/PanoramicTour/PanoramicTour/scene_descriptions/cameraC.json");
-    //panoramas.push_back(sceneA);
+    
+    panoramas.push_back(sceneA);
     panoramas.push_back(sceneB);
     panoramas.push_back(sceneC);
     
@@ -57,13 +74,19 @@ PanoramaViewController::PanoramaViewController(){
     
     prepareVAOs();
     
-    enableCulling(GL_CW, GL_BACK);
+    enableCulling(GL_CCW, GL_BACK);
     enableDepthTest(GL_LESS);
     
     updateShaderMatrices();
     
     configureInput();
     glfwGetCursorPos(window, &PanoramaViewController::lastMouseX, &PanoramaViewController::lastMouseY);
+    
+    
+    glEnable(GL_STENCIL_TEST);
+    glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+    glStencilMask(0xFF);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
     
 }
 
@@ -87,32 +110,52 @@ void PanoramaViewController::update(float rate){
     currentCamera->setOrientation(orientationMatrix);
     
     updateShaderMatrices();
+    
+    for (vector<SceneBatch>::iterator batch_it = mySceneBatches.begin(); batch_it != mySceneBatches.end(); ++batch_it) {
+        double dist = glm::length(-currentCamera->getPosition() - batch_it->center);
+        batch_it->distance = dist;
+    }
+    std::sort(mySceneBatches.begin(), mySceneBatches.end());
+    
 }
 
 void PanoramaViewController::draw(){
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     
-   
-    if (shouldDrawPanoB) {
-        glBindVertexArray(myVAOs[0]);
-        glBindTexture(GL_TEXTURE_2D, myTextures[0]);
-        
-        GLint matrixHandle = glGetUniformLocation(currentShader->getProgram(), "modelMatrix");
-        glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, glm::value_ptr(panoramas[0].getTransform()) );
-        
-        glDrawElements(GL_TRIANGLES, (GLsizei) panoramas[0].numOfIndices(), GL_UNSIGNED_INT, 0);
-    }
+//    if (shouldDrawPanoC) {
+//        glBindVertexArray(myVAOs[2]);
+//        glBindTexture(GL_TEXTURE_2D, myTextures[2]);
+//        
+//        GLint matrixHandle = glGetUniformLocation(currentShader->getProgram(), "modelMatrix");
+//        glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, glm::value_ptr(panoramas[2].getTransform()) );
+//        
+//        glDrawElements(GL_TRIANGLES, (GLsizei) panoramas[2].numOfIndices(), GL_UNSIGNED_INT, 0);
+//    }
+//    
+//    
+//    if (shouldDrawPanoA) {
+//        glBindVertexArray(myVAOs[0]);
+//        glBindTexture(GL_TEXTURE_2D, myTextures[0]);
+//        
+//        GLint matrixHandle = glGetUniformLocation(currentShader->getProgram(), "modelMatrix");
+//        glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, glm::value_ptr(panoramas[0].getTransform()) );
+//        
+//        glDrawElements(GL_TRIANGLES, (GLsizei) panoramas[0].numOfIndices(), GL_UNSIGNED_INT, 0);
+//    }
+//    
+//    
+//    if (shouldDrawPanoB) {
+//        glBindVertexArray(myVAOs[1]);
+//        glBindTexture(GL_TEXTURE_2D, myTextures[1]);
+//        
+//        GLint matrixHandle = glGetUniformLocation(currentShader->getProgram(), "modelMatrix");
+//        glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, glm::value_ptr(panoramas[1].getTransform()) );
+//        
+//        glDrawElements(GL_TRIANGLES, (GLsizei) panoramas[1].numOfIndices(), GL_UNSIGNED_INT, 0);
+//    }
     
-    if (shouldDrawPanoC) {
-        glBindVertexArray(myVAOs[1]);
-        glBindTexture(GL_TEXTURE_2D, myTextures[1]);
-        
-        GLint matrixHandle = glGetUniformLocation(currentShader->getProgram(), "modelMatrix");
-        glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, glm::value_ptr(panoramas[1].getTransform()) );
-        
-        glDrawElements(GL_TRIANGLES, (GLsizei) panoramas[1].numOfIndices(), GL_UNSIGNED_INT, 0);
-    }
+    
     
 //    for (int i = 0; i < panoramas.size(); ++i) {
 //        
@@ -124,6 +167,17 @@ void PanoramaViewController::draw(){
 //        
 //        glDrawElements(GL_TRIANGLES, (GLsizei) panoramas[i].numOfIndices(), GL_UNSIGNED_INT, 0);
 //    }
+    
+    
+    for (vector<SceneBatch>::iterator batch_it = mySceneBatches.begin(); batch_it != mySceneBatches.end(); ++batch_it) {
+        glBindVertexArray(batch_it->vao);
+        glBindTexture(GL_TEXTURE_2D, batch_it->texture);
+        
+        GLint matrixHandle = glGetUniformLocation(currentShader->getProgram(), "modelMatrix");
+        glUniformMatrix4fv(matrixHandle, 1, GL_FALSE, glm::value_ptr(panoramas[batch_it->index].getTransform()) );
+        
+        glDrawElements(GL_TRIANGLES, (GLsizei) panoramas[batch_it->index].numOfIndices(), GL_UNSIGNED_INT, 0);
+    }
     
     glBindVertexArray(0);
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -182,6 +236,10 @@ void PanoramaViewController::key_callback(GLFWwindow *window, int key, int scanc
     
     if (key == ( GLFW_KEY_ESCAPE ) && (action == GLFW_PRESS)){
         glfwSetWindowShouldClose(window, true);
+    }
+    
+    if (key == ( GLFW_KEY_A ) && (action == GLFW_PRESS)){
+        shouldDrawPanoA = !shouldDrawPanoA;
     }
     
     if (key == ( GLFW_KEY_B ) && (action == GLFW_PRESS)){
@@ -274,5 +332,12 @@ void PanoramaViewController::prepareVAOs(){
         myTextures.push_back(texture);
         std::cout << i << std::endl;
         
+        SceneBatch batch;
+        batch.index = i++;
+        batch.vao = vao;
+        batch.texture = texture;
+        batch.center = pano_it->getPosition();
+        batch.distance = 0.0;
+        mySceneBatches.push_back(batch);
     }
 }

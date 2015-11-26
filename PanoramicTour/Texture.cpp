@@ -17,7 +17,9 @@ Texture::Texture(std::string imageName) {
     bitmap = FreeImage_Load(FreeImage_GetFileType(imageName.c_str(), 0), imageName.c_str());
     width = FreeImage_GetWidth(bitmap);
     height = FreeImage_GetHeight(bitmap);
+    int channels = FreeImage_GetBPP(bitmap);
     std::cout << "Carregada a width: " << width << " e tambem a height: " << height << std::endl;
+    std::cout << "Channels: " << channels << std::endl;
 }
 
 /**
