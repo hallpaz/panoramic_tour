@@ -1,2 +1,6 @@
-# Panoramic Tour
+# A Tour through the Art Gallery with RGB-D Panoramas
+### by Hallison Paz
 My Final Project for the discipline  Fundamentals and Trends in Vision and Image Processing
+
+ The project A Tour through the Art Gallery with RGB-D Panoramas was presented as a requirement for the discipline Fundamentals and Trends in Vision and Image Processing at IMPA in 2015. Its goal is to provide a continuous navigation through an in-door environment using omnidirectional RGB-D images captured from pre-determined locations. The project was implemented in C++ using the OpenGL 3.3 API. The RGB-D images were captured from synthetic data using a 3D scene modeled with the software Blender.
+   We believe that RGB-D and omnidirectional imagery are trends with great potential to be explored. We constantly see new medias and devices emerging with new forms of interaction such as 360° videos and RGB-D cameras for mobile devices. Besides that, these subjects interface very well with other areas of research, leading to a cooperation in new degrees in Mobile Robotics, Virtual and Augmented Reality, Pattern Recognition and so on. In this presentation, we exploit this point of view a little bit through the famous Art Gallery problem.
