@@ -15,6 +15,7 @@
 #include "Triangle.hpp"
 
 void write_Ply(std::vector<Vertex> &vertices, std::vector<Triangle> &faces, std::string filename);
+void write_OFF(std::vector<Vertex> &vertices, std::vector<Triangle> &faces, std::string filename);
 
 
 #endif /* Utils_hpp */

@@ -7,6 +7,8 @@
 
 #include "DrawableNode.h"
 
+#include "Utils.hpp"
+
 using json = nlohmann::json;
 using namespace cimg_library;
 
@@ -47,11 +49,12 @@ void DrawableNode::createMeshFromDepthImage(std::string image_path){
     
     int j = 0; int i = 0;
     float u, v, depth;
+    
     for(theta = 0.00005; theta < M_PI; theta += (M_PI - 0.0001)/(paralelos-1)){
         for(phi = 0.0; phi < 2*M_PI; phi += 2*M_PI/meridianos){
             //Position coordinates
             depth = image(i, j);
-
+            
             u = phi/(2*M_PI);
             v = 1.0 - theta/M_PI;
             
@@ -119,6 +122,7 @@ void DrawableNode::createMeshFromDepthImage(std::string image_path){
     }
     std::cout << "min: " << mindist << " max: " << maxdist << std::endl;
     //std::cout << "indices vector size: " << indexBuffer.size() << std::endl;
+    //write_OFF(vertexBuffer, indexBuffer, "/Users/hallpaz/malhaA.off");
     
 }
 

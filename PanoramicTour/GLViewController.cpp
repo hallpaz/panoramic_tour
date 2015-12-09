@@ -23,7 +23,7 @@ void GLViewController::initGLContext(unsigned int width, unsigned int height){
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    window = glfwCreateWindow(width, height, "Opengl", nullptr, nullptr);
+    window = glfwCreateWindow(1024, 768, "Opengl", nullptr, nullptr);
     
     if (!window)
     {
