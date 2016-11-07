@@ -1,0 +1,30 @@
+{
+  "DVTSourceControlWorkspaceBlueprintPrimaryRemoteRepositoryKey" : "0B99668C656DDD936BF8942D4AE2B9626B2FC3BE",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyRepositoryLocationsKey" : {
+
+  },
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyStatesKey" : {
+    "0B99668C656DDD936BF8942D4AE2B9626B2FC3BE" : 0,
+    "D6DF976AA6D14491C2314E8D1201C07F43E39CD1" : 0
+  },
+  "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "C033DDB3-DB8F-4462-B958-8D3D4A37A966",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyPathsKey" : {
+    "0B99668C656DDD936BF8942D4AE2B9626B2FC3BE" : "PanoramicTour\/",
+    "D6DF976AA6D14491C2314E8D1201C07F43E39CD1" : "PanoramicTour\/3rd_party\/glm\/"
+  },
+  "DVTSourceControlWorkspaceBlueprintNameKey" : "PanoramicTour",
+  "DVTSourceControlWorkspaceBlueprintVersion" : 204,
+  "DVTSourceControlWorkspaceBlueprintRelativePathToProjectKey" : "PanoramicTour.xcodeproj",
+  "DVTSourceControlWorkspaceBlueprintRemoteRepositoriesKey" : [
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/bitbucket.org\/hallpaz\/panoramic-tour.git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "0B99668C656DDD936BF8942D4AE2B9626B2FC3BE"
+    },
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/github.com\/g-truc\/glm.git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "D6DF976AA6D14491C2314E8D1201C07F43E39CD1"
+    }
+  ]
+}
