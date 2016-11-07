@@ -92,7 +92,7 @@ void LPShader::linkProgram(){
         {
             char* infoLog = new char[(sizeof(char) * infoLen)];
             glGetProgramInfoLog(program, infoLen, NULL, infoLog);
-            delete infoLog;
+            delete[] infoLog;
         }
         glDeleteProgram(program);
         return;
@@ -171,7 +171,7 @@ GLuint LPShader::loadShader(GLenum type, const GLchar *shaderSrc) {
 		{
 			char* infoLog = new char[(sizeof(char) * infoLen)];
 			glGetShaderInfoLog(shader, infoLen, NULL, infoLog);
-			delete infoLog;
+			delete[] infoLog;
 		}
 		glDeleteShader(shader);
 		return 0;
